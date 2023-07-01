@@ -115,8 +115,8 @@ main(int argc, char* argv[])
   p2p.Install(nodes.Get(2), nodes.Get(6));
   p2p.Install(nodes.Get(2), nodes.Get(7));
   p2p.Install(nodes.Get(3), nodes.Get(8));
-//  p2p.Install(nodes.Get(3), nodes.Get(2));
-  p2p.Install(nodes.Get(2), nodes.Get(10));  
+  p2p.Install(nodes.Get(3), nodes.Get(2));
+//  p2p.Install(nodes.Get(2), nodes.Get(10));  
 
 //  p2p.Install(nodes.Get(3), nodes.Get(7));
 //  p2p.Install(nodes.Get(1), nodes.Get(11));
@@ -192,25 +192,25 @@ main(int argc, char* argv[])
   Config::ConnectWithoutContext( strcallback, MakeCallback( & NackCallback ) );
 
 
-  consumerHelper.SetPrefix("/prefix");
-  consumerHelper.SetAttribute("StartSeq", IntegerValue(5231 )); 
-  consumerHelper.SetAttribute("Frequency", StringValue(freq)); // 10 interests a second
-  ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(10));
-  auto apps2 = consumerHelper.Install(nodes.Get(10));
+//  consumerHelper.SetPrefix("/prefix");
+//  consumerHelper.SetAttribute("StartSeq", IntegerValue(5231 )); 
+//  consumerHelper.SetAttribute("Frequency", StringValue(freq)); // 10 interests a second
+//  ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(10));
+//  auto apps2 = consumerHelper.Install(nodes.Get(10));
 
 //  apps2.Start(Seconds(5.0));
 //  apps2.Stop(Seconds(20.0));
 
-  n = "10"; 
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/SentInterest";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( &SentInterestCallback ) );
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/ReceivedData";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( & ReceivedDataCallback ) );
+//  n = "10"; 
+//  strcallback = "/NodeList/"+n+"/ApplicationList/*/SentInterest";
+//  Config::ConnectWithoutContext( strcallback, MakeCallback( &SentInterestCallback ) );
+//  strcallback = "/NodeList/"+n+"/ApplicationList/*/ReceivedData";
+//  Config::ConnectWithoutContext( strcallback, MakeCallback( & ReceivedDataCallback ) );
 
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/Data";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( & DataCallback ) );
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/Nack";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( & NackCallback ) );
+//  strcallback = "/NodeList/"+n+"/ApplicationList/*/Data";
+//  Config::ConnectWithoutContext( strcallback, MakeCallback( & DataCallback ) );
+//  strcallback = "/NodeList/"+n+"/ApplicationList/*/Nack";
+//  Config::ConnectWithoutContext( strcallback, MakeCallback( & NackCallback ) );
 
   // first node
 //   apps2.Stop(Seconds(100.0)); // stop the consumer app at 10 seconds mark
@@ -257,7 +257,7 @@ main(int argc, char* argv[])
 	 producerHelper.SetAttribute("Hint", StringValue(std::to_string(i)));
         if(i == 8 || i ==5){
            //  producerHelper.SetAttribute("Capacity", IntegerValue(50));
-	     producerHelper.SetAttribute("Capacity", StringValue("100"));
+	     producerHelper.SetAttribute("Capacity", StringValue("50"));
 	}else{
             // producerHelper.SetAttribute("Capacity", IntegerValue(100));
 	     producerHelper.SetAttribute("Capacity", StringValue("100"));

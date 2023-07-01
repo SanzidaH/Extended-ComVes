@@ -163,7 +163,8 @@ Producer::PrintResource(uint32_t task_util)
 	int util = m_util;
 	int utilLeft = m_capacity - m_utilization;
 	//  int serverLeft =std::round(static_cast<double>(utilLeft)/m_util);
-	int serverLeft = (utilLeft/m_util);
+int serverLeft =std::ceil(static_cast<double>(utilLeft)/m_util);
+//	int serverLeft = (utilLeft/m_util);
   	 NS_LOG_INFO("Current Resource: " <<  serverLeft);
          m_serverUpdate(GetNode()->GetId(), "", serverLeft , "Current Resource");	
 	 Simulator::Schedule(Seconds(0.02), &Producer::PrintResource,this, 0);
@@ -189,7 +190,8 @@ Producer::OnInterest(shared_ptr<const Interest> interest)
   int util = m_util;
   int utilLeft = m_capacity - m_utilization;
 //  int serverLeft =std::round(static_cast<double>(utilLeft)/m_util);
-int serverLeft = (utilLeft/m_util);
+//int serverLeft = (utilLeft/m_util);
+int serverLeft =std::ceil(static_cast<double>(utilLeft)/m_util);
   if((m_utilization + util) > m_capacity){  
   //  computeTime = 5;
     NS_LOG_INFO("OVERLOADED");
@@ -200,7 +202,8 @@ int serverLeft = (utilLeft/m_util);
     serviceCount++;	 
     m_utilization += util;
     utilLeft = m_capacity - m_utilization;
-    serverLeft = (utilLeft/m_util);
+   // serverLeft = (utilLeft/m_util);
+    int serverLeft =std::ceil(static_cast<double>(utilLeft)/m_util);
    // serverLeft =std::round(static_cast<double>(utilLeft)/m_util);
     m_serverUpdate(GetNode()->GetId(), interest->getName().toUri() , serverLeft, "Data Processing");
     NS_LOG_INFO(interest->getName() << "  m_utilization "<< m_utilization  << " will be increased by " << util);
@@ -208,9 +211,9 @@ int serverLeft = (utilLeft/m_util);
    // computeTime = (m_utilization/m_capacity);
     
     double computeTime = static_cast<double>(m_utilization) / m_capacity;
-    if ((computeTime*100) < 30){
-	    computeTime = 0.2;
-    }
+//    if ((computeTime*100) < 30){
+//	    computeTime = 0.2;
+//    }
 
   //  double remaining = m_capacity - m_utilization;
   //  double computeTime =static_cast<double>(remaining) /static_cast<double>(m_utilization);
@@ -270,7 +273,8 @@ Producer::OnReceiveInitialRequest(shared_ptr<const Interest> interest, uint32_t 
   
     serviceCount--;
     int utilLeft = m_capacity - m_utilization; 
-    int serverLeft = (utilLeft/m_util); 
+    int serverLeft =std::ceil(static_cast<double>(utilLeft)/m_util);
+   // int serverLeft = (utilLeft/m_util); 
    // int serverLeft =std::round(static_cast<double>(utilLeft)/m_util);
     // NS_LOG_INFO("service count " <<  serviceCount);
    // std::string pop_field = " " + std::to_string(serviceCount);

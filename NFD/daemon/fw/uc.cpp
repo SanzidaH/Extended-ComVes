@@ -82,10 +82,11 @@ uc::uc(Forwarder& forwarder, const Name& name)
               NFD_LOG_DEBUG("name " << interestName << ", face " << face << ", cost " << cost); 
               if(cost == 0){  //this part for periodic correction
 			//	m_loadTable.insert({ interestName, {face, m_seq, 1, 0, 1} });
-				m_cost[interestName].push_back({{face, {0, 0, 1}}});
+				m_cost[interestName].push_back({{face, {0, 0, 1, 0, m_max}}});
+				//cost, serverhint, isServer, freshness, capacity
               }else{
 			//		m_loadTable.insert({ interestName, {face, m_seq, m_max, 0, 0} });
-					m_cost[interestName].push_back({{face, {m_max, 0, 0}}});
+					m_cost[interestName].push_back({{face, {m_max, 0, 0, 0, m_max}}});
               }             
               
          }
@@ -193,16 +194,81 @@ uc::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingress,
 		if(!inTable){ //if not in mtable - insert in mtable
 				NFD_LOG_INFO(" NEW entry initilaize * " << interestName << " "<< outFaceTemp.getId());
                 if(cost == 0){
-                	 m_cost[interestName].push_back({{boost::numeric_cast<int>(outFaceTemp.getId()), {0, 0, 1}}});
+                	 m_cost[interestName].push_back({{boost::numeric_cast<int>(outFaceTemp.getId()), {0, 0, 1, 0, m_max}}});
                 }else{
-             		 m_cost[interestName].push_back({{boost::numeric_cast<int>(outFaceTemp.getId()), {m_max, 0, 0}}});
+             		 m_cost[interestName].push_back({{boost::numeric_cast<int>(outFaceTemp.getId()), {m_max, 0, 0, 0, m_max}}});
                 }
 
         }
    }
-   // Check if m_table has entry for the incoming interest and find interface with lowest cost
+   
+
+// Initialize counter variable
+int highestCostCount = 0;
+int mtableHint = 0;
+
+// Check if m_table has entry for the incoming interest and find interface with highest cost
 bool flag = false;
 for (auto const& [key, vec_of_maps] : m_cost) {
+    // NFD_LOG_DEBUG("Name: " << key);
+    for (auto const& inner_map : vec_of_maps) {
+        for (auto const& [inner_key, inner_vec] : inner_map) {
+            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2]);
+
+            if (mtableCost <= inner_vec[0] && inner_key != boost::numeric_cast<int>(inFace.getId())) {
+                if (mtableCost < inner_vec[0]) {
+                    // Reset the counter if a higher cost is found
+                    mtableCost = inner_vec[0];
+                    mtableFace = inner_key;
+		   // mtableHint = inner_vec[1];
+		    found = true;
+                    highestCostCount = 1;
+                } else {
+                    // Increment the counter if the same highest cost is encountered
+                    highestCostCount++;
+                    // 50% chance of updating the face
+                  /*  if (rand() % 2 == 0) {
+                        mtableFace = inner_key;
+                        flag = true;
+                        break;
+                    }*/
+                }
+             //   found = true;
+            }
+//	    if (flag) break;
+        }
+  //      if (flag) break;
+    }
+//    if (flag) break;
+}
+
+// Use highestCostCount variable to keep track of the number of times the highest cost is encountered
+NFD_LOG_DEBUG("Number of times highest cost encountered: " << highestCostCount);
+
+int capacity_lowest = INT_MAX;
+int lowestCapacityCount = 0;
+if(highestCostCount > 1){
+for (auto const& [key, vec_of_maps] : m_cost) { //name
+    for (auto const& inner_map : vec_of_maps) { 
+        for (auto const& [inner_key, inner_vec] : inner_map) {//face
+            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2]);
+            if (mtableCost == inner_vec[0] && inner_key != boost::numeric_cast<int>(inFace.getId())) {
+                if (capacity_lowest > inner_vec[4]) {
+                    capacity_lowest = inner_vec[4];
+                    mtableFace = inner_key;
+		    lowestCapacityCount = 1;
+                 //   mtableHint = inner_vec[1];
+                } 
+                else {
+			lowestCapacityCount++;
+		}		
+            }
+        }
+     }
+  }
+}
+
+/*for (auto const& [key, vec_of_maps] : m_cost) {
    // NFD_LOG_DEBUG( "Name: " << key);
     for (auto const& inner_map : vec_of_maps) {
         for (auto const& [inner_key, inner_vec] : inner_map) {
@@ -223,19 +289,22 @@ for (auto const& [key, vec_of_maps] : m_cost) {
              				 mtableFace = inner_key;
 					 found = true;
 
-	     /*  if (mtableCost == inner_vec[0]) {
+	       if (mtableCost == inner_vec[0]) {
                     // 50% chance of updating the face
                     if (rand() % 2 == 0) {
                         mtableFace = inner_key;
 			flag = true;
                         break;
                     }
-                }*/
+                }
            } 
         if(flag)  break;
 	}
     }
 }
+*/
+
+
 
 /*
  for (const auto& outerMapPair : m_cost) {
@@ -587,7 +656,7 @@ for (auto const& [key, vec_of_maps] : m_cost) {
     if (!exists && faceExist) {
   //  if (!exists){
 	    NFD_LOG_DEBUG("does not exist! server: "<< serverhint << ", face: " << newOutface << ", cost: " << cost);
-            innerVector.push_back({{newOutface, {cost, serverhint, 0}}});
+            innerVector.push_back({{newOutface, {cost, serverhint, 0, 0, cost}}});
 	
     }
 
@@ -616,9 +685,11 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
                                          NFD_LOG_DEBUG("found serverhint " << serverhint << " updating from " << inner_vec[0] << " to " << cost);
                                          inner_vec[0] = cost; // Update
                                  }
+			
                                   if(inner_vec[1] == 0){ // correction received so, intiliaztion value with servicehint 0 make 0, does not count
                                          NFD_LOG_DEBUG("updating cost of server 0 to 0" );
                                          inner_vec[0] = -2000;
+					
                                  }
             }
 	    else if(inner_key != newOutface && inner_vec[2] == 0 && inner_vec[1] == serverhint && inner_vec[1]!=0 && (inner_vec[0]+50>0) && inner_vec[0]!=cost ){
@@ -738,15 +809,14 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
             auto& inner_key = it_inner_key->first;
             auto& inner_vec = it_inner_key->second;
             bool fnd = false;
-            if (inner_key == newOutface && inner_vec[2] == 0 && inner_vec[0] == lowest_cost 
-			    && (inner_vec[0] + 100 > 0) ) {
-          //      inner_vec[0] = inner_vec[0]-300;
+            if (inner_key == newOutface && inner_vec[2] == 0 && inner_vec[0] == lowest_cost) {
+                inner_vec[0] = inner_vec[0]-300;
 		penaltyTemp = inner_vec[0];
 		fnd = true;
 		penaltyAdd = true;
 		hintTemp = inner_vec[1];
-                break;
 	        NFD_LOG_DEBUG("hint<<" << inner_vec[1]);
+		break;
             }
 	   // else if(inner_key != newOutface && penaltyAdd == true && inner_vec[1] == hintTemp){
              //    inner_vec[0] = penaltyTemp;
