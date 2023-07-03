@@ -68,6 +68,8 @@ void ReceivedDataCallback( uint32_t, shared_ptr<const ndn::Data>,uint32_t);
 void DataCallback( uint32_t, std::string, std::string);
 
 
+//  typedef void (*NackTraceCallback)( uint32_t,  std::string, shared_ptr<const lp::Nack> nack);
+void NackCallback( uint32_t, std::string, shared_ptr<const ndn::lp::Nack>);
 void ServerUpdateCallback( uint32_t nodeid, std::string server, int serverUtil, std::string service);
 
 std::ofstream tracefile;
@@ -106,18 +108,15 @@ main(int argc, char* argv[])
 
   
   p2p.Install(nodes.Get(0), nodes.Get(1));
-  p2p.Install(nodes.Get(11), nodes.Get(2));
-  p2p.Install(nodes.Get(1), nodes.Get(11));
-  p2p.Install(nodes.Get(1), nodes.Get(12));
-  p2p.Install(nodes.Get(12), nodes.Get(3));
-  p2p.Install(nodes.Get(2), nodes.Get(4));
+  p2p.Install(nodes.Get(1), nodes.Get(2));
+  p2p.Install(nodes.Get(1), nodes.Get(3));
+//  p2p.Install(nodes.Get(2), nodes.Get(4));
   p2p.Install(nodes.Get(2), nodes.Get(5));
   p2p.Install(nodes.Get(2), nodes.Get(6));
   p2p.Install(nodes.Get(2), nodes.Get(7));
   p2p.Install(nodes.Get(3), nodes.Get(8));
+  p2p.Install(nodes.Get(3), nodes.Get(2));
   p2p.Install(nodes.Get(2), nodes.Get(10));  
-  p2p.Install(nodes.Get(12), nodes.Get(13));
-
 
 //  p2p.Install(nodes.Get(3), nodes.Get(7));
 //  p2p.Install(nodes.Get(1), nodes.Get(11));
@@ -151,6 +150,19 @@ main(int argc, char* argv[])
   ndnHelper.setCsSize(1);
   ndnHelper.SetDefaultRoutes(true);
   ndnHelper.InstallAll();
+
+
+     // Choosing forwarding strategy
+/*  if(correction == 1 ){
+ // ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/ccomves");
+  ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/uc");
+  } else{
+  ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/comves");
+  }*/
+//  ndn::StrategyChoiceHelper::InstallAll("/update", "/localhost/nfd/strategy/comves");
+
+
+
   ndn::GlobalRoutingHelper ndnGlobalRoutingHelper;
   ndnGlobalRoutingHelper.Install( nodes );
   // Installing applications
@@ -160,12 +172,12 @@ main(int argc, char* argv[])
   // Consumer will request /prefix/0, /prefix/1, ...
   // consumerHelper.SetPrefix("/prefix/"+std::to_string(rand()%3+1));
   
-  consumerHelper.SetPrefix("/prefix/0");
+  consumerHelper.SetPrefix("/prefix");
   consumerHelper.SetAttribute("Frequency", StringValue(freq)); // 10 interests a second
     consumerHelper.SetAttribute("StartSeq", IntegerValue( 0 ));
   //ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(0));
   auto apps = consumerHelper.Install(nodes.Get(0));  
-  apps.Stop(Seconds(20.0));
+//  apps.Stop(Seconds(20.0));
 
   std::string strcallback;
   std::string n = "0"; 
@@ -173,14 +185,21 @@ main(int argc, char* argv[])
   Config::ConnectWithoutContext( strcallback, MakeCallback( &SentInterestCallback ) );
   strcallback = "/NodeList/"+n+"/ApplicationList/*/ReceivedData";
   Config::ConnectWithoutContext( strcallback, MakeCallback( & ReceivedDataCallback ) );
+  strcallback = "/NodeList/"+n+"/ApplicationList/*/Data";
+  Config::ConnectWithoutContext( strcallback, MakeCallback( & DataCallback ) );
 
-  consumerHelper.SetPrefix("/prefix/10");
-  consumerHelper.SetAttribute("StartSeq", IntegerValue(0)); 
+  strcallback = "/NodeList/"+n+"/ApplicationList/*/Nack";
+  Config::ConnectWithoutContext( strcallback, MakeCallback( & NackCallback ) );
+
+
+  consumerHelper.SetPrefix("/prefix");
+  consumerHelper.SetAttribute("StartSeq", IntegerValue(5231 )); 
   consumerHelper.SetAttribute("Frequency", StringValue(freq)); // 10 interests a second
 //  ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(10));
   auto apps2 = consumerHelper.Install(nodes.Get(10));
-  apps2.Start(Seconds(5.0));
-  apps2.Stop(Seconds(20.0));
+
+//  apps2.Start(Seconds(5.0));
+//  apps2.Stop(Seconds(20.0));
 
   n = "10"; 
   strcallback = "/NodeList/"+n+"/ApplicationList/*/SentInterest";
@@ -188,23 +207,13 @@ main(int argc, char* argv[])
   strcallback = "/NodeList/"+n+"/ApplicationList/*/ReceivedData";
   Config::ConnectWithoutContext( strcallback, MakeCallback( & ReceivedDataCallback ) );
 
-
-  consumerHelper.SetPrefix("/prefix/13");
-  consumerHelper.SetAttribute("StartSeq", IntegerValue(0));
-  consumerHelper.SetAttribute("Frequency", StringValue(freq)); // 10 interests a second
-//  ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(10));
-  auto apps3 = consumerHelper.Install(nodes.Get(13));
-  apps3.Start(Seconds(8.0));
-  apps3.Stop(Seconds(20.0));
-
-  n = "13";
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/SentInterest";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( &SentInterestCallback ) );
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/ReceivedData";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( & ReceivedDataCallback ) );
+  strcallback = "/NodeList/"+n+"/ApplicationList/*/Data";
+  Config::ConnectWithoutContext( strcallback, MakeCallback( & DataCallback ) );
+  strcallback = "/NodeList/"+n+"/ApplicationList/*/Nack";
+  Config::ConnectWithoutContext( strcallback, MakeCallback( & NackCallback ) );
 
   // first node
-//   apps2.Stop(Seconds(50.0)); // stop the consumer app at 10 seconds mark
+//   apps2.Stop(Seconds(100.0)); // stop the consumer app at 10 seconds mark
 
   // Producer
   ndn::AppHelper producerHelper("ns3::ndn::Producer");
@@ -244,23 +253,25 @@ main(int argc, char* argv[])
   producerHelper.Install(nodes.Get(8)); // last node 
   producerHelper.Install(nodes.Get(9)); // last node
 */
- for(int i = 4; i < 9; i++){
+ for(int i = 5; i < 9; i++){
 	 producerHelper.SetAttribute("Hint", StringValue(std::to_string(i)));
-        if(i == 8 || i ==4){
-            // producerHelper.SetAttribute("Capacity", IntegerValue(50));
-	     producerHelper.SetAttribute("Capacity", StringValue("100"));
+        if(i == 8 || i ==5){
+           //  producerHelper.SetAttribute("Capacity", IntegerValue(50));
+	     producerHelper.SetAttribute("Capacity", StringValue("50"));
 	}else{
             // producerHelper.SetAttribute("Capacity", IntegerValue(100));
 	     producerHelper.SetAttribute("Capacity", StringValue("100"));
 	}
 
 	 ndnGlobalRoutingHelper.AddOrigins("/prefix",nodes.Get(i));
+//	 ndnGlobalRoutingHelper.AddOrigins("/prefix/10",nodes.Get(i));
 	   producerHelper.Install(nodes.Get(i)); // last node
-
+//          producerHelper.SetPrefix("/prefix/10");
+//	  producerHelper.Install(nodes.Get(i));
     		strcallback = "/NodeList/"+std::to_string(i)+"/ApplicationList/*/ServerUpdate";
   				Config::ConnectWithoutContext( strcallback, MakeCallback( & ServerUpdateCallback ) ); 
  }
-
+ 
     // Calculate and install FIBs
   //ndn::GlobalRoutingHelper::CalculateRoutes();
   ndn::GlobalRoutingHelper::CalculateAllPossibleRoutes();
@@ -312,11 +323,25 @@ void ReceivedDataCallback( uint32_t nodeid, shared_ptr<const ndn::Data> data, ui
 
 void DataCallback( uint32_t nodeid, std::string name, std::string event ){
 
+
+//         tracefile << nodeid <<"," << event << "," << name << "," << std::fixed << setprecision( 9 ) <<
+//         ((Simulator::Now().GetSeconds()))  << std::endl;
+
          tracefile3 << nodeid << "," << event << "," <<  name << "," << std::fixed << setprecision( 9 ) <<
          ((Simulator::Now().GetSeconds()))  << std::endl;
 
 }
 
+void NackCallback( uint32_t nodeid, std::string name,  shared_ptr<const ndn::lp::Nack> nack ){
+
+
+//         tracefile << nodeid <<"," << event << "," << name << "," << std::fixed << setprecision( 9 ) <<
+//         ((Simulator::Now().GetSeconds()))  << std::endl;
+
+         tracefile3 << nodeid << "," << nack->getReason() << "," <<  nack->getInterest().getName().toUri() << "," << std::fixed << setprecision( 9 ) <<
+         ((Simulator::Now().GetSeconds()))  << std::endl;
+
+}
 
 void ServerUpdateCallback( uint32_t nodeid, std::string server, int serverUtil, std::string service){
   tracefile2 << nodeid << "," << server << "," << serverUtil <<","<<service<< "," << std::fixed << setprecision( 9 ) <<

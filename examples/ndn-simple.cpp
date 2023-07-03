@@ -115,7 +115,7 @@ main(int argc, char* argv[])
   p2p.Install(nodes.Get(2), nodes.Get(6));
   p2p.Install(nodes.Get(2), nodes.Get(7));
   p2p.Install(nodes.Get(3), nodes.Get(8));
-  p2p.Install(nodes.Get(3), nodes.Get(2));
+//  p2p.Install(nodes.Get(3), nodes.Get(2));
 //  p2p.Install(nodes.Get(2), nodes.Get(10));  
 
 //  p2p.Install(nodes.Get(3), nodes.Get(7));
