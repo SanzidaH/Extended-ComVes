@@ -110,13 +110,14 @@ main(int argc, char* argv[])
   p2p.Install(nodes.Get(0), nodes.Get(1));
   p2p.Install(nodes.Get(1), nodes.Get(2));
   p2p.Install(nodes.Get(1), nodes.Get(3));
-//  p2p.Install(nodes.Get(2), nodes.Get(4));
+//  p2p.Install(nodes.Get(2), nodes.Get(11));
   p2p.Install(nodes.Get(2), nodes.Get(5));
   p2p.Install(nodes.Get(2), nodes.Get(6));
   p2p.Install(nodes.Get(2), nodes.Get(7));
   p2p.Install(nodes.Get(3), nodes.Get(8));
-  p2p.Install(nodes.Get(3), nodes.Get(2));
-  p2p.Install(nodes.Get(2), nodes.Get(10));  
+  p2p.Install(nodes.Get(3), nodes.Get(10));
+//  p2p.Install(nodes.Get(3), nodes.Get(10));
+//  p2p.Install(nodes.Get(2), nodes.Get(3));  
 
 //  p2p.Install(nodes.Get(3), nodes.Get(7));
 //  p2p.Install(nodes.Get(1), nodes.Get(11));
@@ -173,8 +174,9 @@ main(int argc, char* argv[])
   // consumerHelper.SetPrefix("/prefix/"+std::to_string(rand()%3+1));
   
   consumerHelper.SetPrefix("/prefix");
-  consumerHelper.SetAttribute("Frequency", StringValue(freq)); // 10 interests a second
-    consumerHelper.SetAttribute("StartSeq", IntegerValue( 0 ));
+  consumerHelper.SetAttribute("Frequency", StringValue(std::to_string( std::stoi(freq)*1))); // 10 interests a second
+//  consumerHelper.SetAttribute("Frequency", StringValue(freq)); // 10 interests a second
+  consumerHelper.SetAttribute("StartSeq", IntegerValue( 0 ));
   //ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(0));
   auto apps = consumerHelper.Install(nodes.Get(0));  
 //  apps.Stop(Seconds(20.0));
@@ -187,14 +189,13 @@ main(int argc, char* argv[])
   Config::ConnectWithoutContext( strcallback, MakeCallback( & ReceivedDataCallback ) );
   strcallback = "/NodeList/"+n+"/ApplicationList/*/Data";
   Config::ConnectWithoutContext( strcallback, MakeCallback( & DataCallback ) );
-
   strcallback = "/NodeList/"+n+"/ApplicationList/*/Nack";
   Config::ConnectWithoutContext( strcallback, MakeCallback( & NackCallback ) );
 
 
   consumerHelper.SetPrefix("/prefix");
   consumerHelper.SetAttribute("StartSeq", IntegerValue(5231 )); 
-  consumerHelper.SetAttribute("Frequency", StringValue(freq)); // 10 interests a second
+  consumerHelper.SetAttribute("Frequency", StringValue(std::to_string( std::stoi(freq)/1))); // 10 interests a second
 //  ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(10));
   auto apps2 = consumerHelper.Install(nodes.Get(10));
 
@@ -294,7 +295,7 @@ main(int argc, char* argv[])
 
   sprintf( trace, "server-%d-%d-%d-.csv", run, std::stoi(freq), correction);/*0.1lf*/
   tracefile2.open( trace, std::ios::out );
-  tracefile2 << "nodeid,service,serviceCount,status"<< std::endl;
+  tracefile2 << "nodeid,service,serviceCount,status,time"<< std::endl;
 
   sprintf( trace, "client-%d-%d-%d-.csv", run, std::stoi(freq), correction);/*0.1lf*/
   tracefile3.open( trace, std::ios::out );

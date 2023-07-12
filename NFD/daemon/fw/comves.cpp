@@ -80,13 +80,15 @@ Comves::Comves(Forwarder& forwarder, const Name& name)
               face = next.getFace().getId();
                cost = next.getCost(); // we are not using it, we would need it for perodic correction to find leaf node
               NFD_LOG_DEBUG("name " << interestName << ", face " << face << ", cost " << cost); 
-              if(cost == 0){  //this part for periodic correction
+              if(cost<3){
+	      if(cost == 0){  //this part for periodic correction
               //m_hasServer = true;
                  m_loadTable.insert({ interestName, {face, m_seq, 1, 0, 1} });
               }else{
                  m_loadTable.insert({ interestName, {face, m_seq, 0, 0, 0} });
                  
-              }             
+              }    
+	      }	      
               
          }
               // m_table structure: name, face, seq, server count, pending_int, hasServer - determines if router is a correction interest sender
@@ -152,7 +154,7 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
                 break;
               }
         }       
-        if(!inTable){ //if not in mtable - insert in mtable
+       /* if(!inTable){ //if not in mtable - insert in mtable
             NFD_LOG_INFO(" NEW entry initilaize * " << interestName << " "<< outFaceTemp.getId()); 
              if(cost == 0){
               m_loadTable.insert({ interestName, {boost::numeric_cast<int>(outFaceTemp.getId()), 0, 1, 0, 1} });
@@ -160,7 +162,7 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
               m_loadTable.insert({ interestName, {boost::numeric_cast<int>(outFaceTemp.getId()), 0, 0, 0, 0} });
             }
             
-        }  
+        }  */
    } 
     
     

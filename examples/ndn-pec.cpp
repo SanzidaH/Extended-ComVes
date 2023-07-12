@@ -62,9 +62,9 @@ std::vector<std::string> SplitString(std::string strLine);
 int
 main(int argc, char * argv[]) {
     // setting default parameters for PointToPoint links and channels
-    //Config::SetDefault("ns3::PointToPointNetDevice::DataRate", StringValue("1Mbps"));
-    //Config::SetDefault("ns3::PointToPointChannel::Delay", StringValue("10ms"));
-    //Config::SetDefault("ns3::QueueBase::MaxSize", StringValue("20p"));
+ Config::SetDefault("ns3::PointToPointNetDevice::DataRate", StringValue("1Mbps"));
+    Config::SetDefault("ns3::PointToPointChannel::Delay", StringValue("10ms"));
+//    Config::SetDefault("ns3::QueueBase::MaxSize", StringValue("20p"));
     Config::SetDefault("ns3::DropTailQueue<Packet>::MaxSize", StringValue("20p"));
   int run = 0, duration = 20; 
   int correction = 1;
@@ -87,7 +87,7 @@ main(int argc, char * argv[]) {
 
     int clientcount = 0;
     // int basecount = 0;
-    ifstream configFile("src/ndnSIM/examples/topologies/topo3.txt", std::ios::in); // Topology file
+    ifstream configFile("src/ndnSIM/examples/topologies/topo-s.txt", std::ios::in); // Topology file
     std::string strLine, strcallback;
     bool gettingNodeCount = false, buildingNetworkTopo = false, assignServers = false;
     bool assignBases= false, assignClients = false, assignPECs = false;
@@ -103,31 +103,44 @@ main(int argc, char * argv[]) {
         // Determine what operation is ongoing while reading the config file
         if (strLine.substr(0, 7) == "BEG_000") {
           gettingNodeCount = true;
+	  std::cout << "BEG_000 gettingNodeCount " << strLine << std::endl;
           continue;
         }
         if (strLine.substr(0, 7) == "END_000") {
           // Create nodes
+	  std::cout << "END_000 " << strLine << std::endl;
           gettingNodeCount = false;
           nodes.Create(nodeCount);
           continue;
         }
         if (strLine.substr(0, 7) == "BEG_001") {
+		std::cout << "BEG_001 building topo " << strLine << std::endl;
           buildingNetworkTopo = true;
           continue;
         }
         if (strLine.substr(0, 7) == "END_001") {
-          buildingNetworkTopo = false;
-          ndn::StackHelper ndnHelper;
-          ndnHelper.InstallAll();
-          ndnGlobalRoutingHelper.Install(nodes);
-
+		std::cout << "END_001 " << strLine << std::endl;
+          	buildingNetworkTopo = false;
+          	ndn::StackHelper ndnHelper;
+	    	ndnHelper.setCsSize(1);
+  		ndnHelper.SetDefaultRoutes(true);
+          	ndnHelper.InstallAll();
+   
+		if(correction == 1 ){
+			ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/uc");
+		} else{
+			ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/comves");
+		}
+    	  ndnGlobalRoutingHelper.Install(nodes);
           continue;
         }
         if (strLine.substr(0, 7) == "BEG_002") {
+		std::cout << "BEG_002 assign server " << strLine << std::endl;
           assignServers = true;
           continue;
         }
         if (strLine.substr(0, 7) == "END_002") {
+		std::cout << "END_002 " << strLine << std::endl;
           assignServers = false;
           continue;
         }
@@ -140,10 +153,12 @@ main(int argc, char * argv[]) {
           continue;
         }
         if (strLine.substr(0, 7) == "BEG_004") {
+		std::cout << "BEG_004 assignClients " << strLine << std::endl;
           assignClients = true;
           continue;
         }
         if (strLine.substr(0, 7) == "END_004") {
+		std::cout << "END_004 " << strLine << std::endl;
           assignClients = false;
           continue;
         }
@@ -157,10 +172,10 @@ main(int argc, char * argv[]) {
         }
 
         if (gettingNodeCount == true) {
-
           // Getting number of nodes to create
           netParams = SplitString(strLine);
           nodeCount = stoi(netParams[0]);
+	  std::cout << "getting Node Count " <<nodeCount << strLine << std::endl;
 
         } else if (buildingNetworkTopo == true) {
 
@@ -169,6 +184,7 @@ main(int argc, char * argv[]) {
           p2p.SetDeviceAttribute("DataRate", StringValue(netParams[2]));
           p2p.SetChannelAttribute("Delay", StringValue(netParams[3]));
           p2p.Install(nodes.Get(std::stoi(netParams[0])), nodes.Get(std::stoi(netParams[1])));
+std::cout << "Building topo " <<std::stoi(netParams[0]) << " " << std::stoi(netParams[1]) << strLine << std::endl;
 
         } else if (assignServers == true) { // || assignPECs == true
           netParams = SplitString(strLine);
@@ -178,29 +194,42 @@ main(int argc, char * argv[]) {
           producerHelper.SetPrefix("/prefix");
           //producerHelper.SetAttribute("Hint", StringValue("/producer" + std::to_string(servercount)));
           producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
-            producerHelper.SetAttribute("Utilization", StringValue(util));
-			producerHelper.SetAttribute("Capacity", StringValue("100"));
+          int nodeServer = std::stoi(netParams[0]);
+	  producerHelper.SetAttribute("Utilization", StringValue(util));
+	  producerHelper.SetAttribute("Capacity", StringValue("100"));
+	  if(nodeServer == 7 || nodeServer ==5){
+           //  producerHelper.SetAttribute("Capacity", IntegerValue(50));
+	     producerHelper.SetAttribute("Capacity", StringValue("50"));
+       	}else{
+            // producerHelper.SetAttribute("Capacity", IntegerValue(100));
+	     producerHelper.SetAttribute("Capacity", StringValue("100"));
+	}
           //producerHelper.SetAttribute("Capacity", UintegerValue(3000));
           producerHelper.Install(nodes.Get(std::stoi(netParams[0])));
 
     		strcallback = "/NodeList/"+netParams[0]+"/ApplicationList/*/ServerUpdate";
   				Config::ConnectWithoutContext( strcallback, MakeCallback( & ServerUpdateCallback ) ); 
-
+std::cout << "Server " << std::stoi(netParams[0]) << strLine << std::endl;
 
         } else if (assignClients == true) {
 		  clientcount++;
+		  int nodeClient = std::stoi(netParams[0]);
           netParams = SplitString(strLine);
           consumerHelper.SetPrefix("/prefix");
           consumerHelper.SetAttribute("Frequency", StringValue(freq)); // 10 interests a second
-          ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(0));  
-          consumerHelper.SetAttribute("StartSeq", IntegerValue( clientcount*91 ));
-		  //consumerHelper.SetAttribute("Task", StringValue("/prefix"));
+//   ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(0));  
+          consumerHelper.SetAttribute("StartSeq", IntegerValue(clientcount*1000));
+	  if(nodeClient == 8){
+		    consumerHelper.SetAttribute("Frequency", StringValue(std::to_string( std::stoi(freq)/2))); // 10 interests a second
+	  }
+	//consumerHelper.SetAttribute("Task", StringValue("/prefix"));
           //consumerHelper.SetAttribute("Hint", StringValue("/client" + std::to_string(clientcount)));
           //ndnGlobalRoutingHelper.AddOrigins("/client", nodes.Get(std::stoi(netParams[0])));
           //ndnGlobalRoutingHelper.AddOrigins("/util", nodes.Get(std::stoi(netParams[0])));
           consumerHelper.Install(nodes.Get(std::stoi(netParams[0])));
 
-          
+          std::cout << "USer " << std::stoi(netParams[0]) << strLine << std::endl;
+
 
           std::string strcallback;
           std::string n = netParams[0]; 
@@ -229,12 +258,12 @@ main(int argc, char * argv[]) {
     configFile.close();
 
     ndn::GlobalRoutingHelper::CalculateAllPossibleRoutes();
-      if(correction == 1 ){
+/*      if(correction == 1 ){
   ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/uc");
   } else{
   ndn::StrategyChoiceHelper::InstallAll("/prefix", "/localhost/nfd/strategy/comves");
   }
-    
+  */  
   //Open trace file for writing
   char trace[100];
 //   sprintf( trace, "comves-run-%d.csv", run);/*0.1lf*/
@@ -244,14 +273,14 @@ main(int argc, char * argv[]) {
 
   sprintf( trace, "server-%d-%d-%d-.csv", run, std::stoi(freq), correction);/*0.1lf*/
   tracefile2.open( trace, std::ios::out );
-  tracefile2 << "nodeid,service,serviceCount,status"<< std::endl;
+  tracefile2 << "nodeid,service,serviceCount,status,time"<< std::endl;
 
   sprintf( trace, "client-%d-%d-%d-.csv", run, std::stoi(freq), correction);/*0.1lf*/
   tracefile3.open( trace, std::ios::out );
   tracefile3 << "nodeid,event,service,time"<< std::endl;
 
 
-  Simulator::Stop(Seconds(70));
+  Simulator::Stop(Seconds(50));
 //  ns3::ndn::L3RateTracer::InstallAll("rate-trace.txt", Seconds(1.0));
   Simulator::Run();
   Simulator::Destroy();

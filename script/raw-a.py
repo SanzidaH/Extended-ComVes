@@ -51,7 +51,8 @@ def main(filepath=None, traceID=None, maxSuccess=None):
                 if row['event'] == 'sent': # current event = sent
                   # totalSent = totalSent + 1 # counting total sent
                    senti[(row['name'])]=0 
-                   if (row['name']) not in pending and int(time) <=(m-20) and int(time) > 5:
+                   #if (row['name']) not in pending:
+                   if (row['name']) not in pending and int(time) <=(m-10) and int(time) > 5:
                       totalSent = totalSent + 1 # counting total sent
                       pending[(row['name'])] = time # storing unique sent packet as pending[name][time] which is not in pending
                   # else:
@@ -88,7 +89,11 @@ def main(filepath=None, traceID=None, maxSuccess=None):
        #     print("total sent: " + str(totalSent))
        #     print("total success: " + str(cnt))
             c = 0
-            f = open(traceID + "UnsortedLatencies.txt","w")
+            array = filename.split("-")
+            freq =  str(array[3])
+            freq = freq[:-4]
+            print("freq " + freq)
+            f = open("UnsortedLatencies-"+traceID + "-"+freq+"-"+str(array[2])+".txt","w")
             cnt = 0
             total = 0
             for key in latencies: # for each node == key
@@ -104,12 +109,12 @@ def main(filepath=None, traceID=None, maxSuccess=None):
 
             print("total delay of successful sent: " + str(totalsucceed))
             print("Accurate avg delay " + str(float(totalsucceed/cnt)))
-            array = filename.split("-")
+           # array = filename.split("-")
            # for word in array:
            #     print("word " +str(word))
-            freq =  str(array[3])
-            freq = freq[:-4]
-            print("freq " + freq)
+           # freq =  str(array[3])
+           # freq = freq[:-4]
+           # print("freq " + freq)
             f2.write(str(array[2]) + "  "  + freq + "  " + str(totalsucceed/cnt) + "\n")
             total = total + ((totalSent-cnt)*100) # setting high latency for unsuccesful sent
            # f = open(traceID + "avgRes.txt","w")
@@ -125,10 +130,15 @@ def main(filepath=None, traceID=None, maxSuccess=None):
             maxSuccess = len(fullLatencies)
             #maxSuccess = 1
             #if len(fullLatencies) < int(maxSuccess):
-            for x in range(int(maxSuccess) - len(fullLatencies)):
-                fullLatencies.append(xmax)
-            cumulatedFullLatencies.extend(fullLatencies)
-    print(node_count) 
+        for x in range(int(maxSuccess) - len(fullLatencies)):
+            fullLatencies.append(xmax)
+        cumulatedFullLatencies.extend(fullLatencies)
+        cumulatedFullLatencies.sort()
+        #f4 = open(traceID+"-" +freq +"-SortedLatencies.txt","w")
+        for each in cumulatedFullLatencies:
+            #f4.write(str(each) + "\n")
+            print(node_count) 
+    #f4.close()
     f2.close()
     f3.close()
     for i in range(0,180):
@@ -153,10 +163,10 @@ def main(filepath=None, traceID=None, maxSuccess=None):
    
  
     #Dump Latencies
-    cumulatedFullLatencies.sort()
-    f = open(traceID+"SortedLatencies.txt","w")
-    for each in cumulatedFullLatencies:
-        f.write(str(each) + "\n")
+    #cumulatedFullLatencies.sort()
+    #f = open(traceID+"SortedLatencies.txt","w")
+    #for each in cumulatedFullLatencies:
+     #   f.write(str(each) + "\n")
 
     return 0
 

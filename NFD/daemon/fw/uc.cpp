@@ -80,14 +80,16 @@ uc::uc(Forwarder& forwarder, const Name& name)
               face = next.getFace().getId();
               cost = next.getCost(); // we are not using it, we would need it for perodic correction to find leaf node
               NFD_LOG_DEBUG("name " << interestName << ", face " << face << ", cost " << cost); 
-              if(cost == 0){  //this part for periodic correction
+              if(cost < 3){
+	      if(cost == 0){  //this part for periodic correction
 			//	m_loadTable.insert({ interestName, {face, m_seq, 1, 0, 1} });
 				m_cost[interestName].push_back({{face, {0, 0, 1, 0, m_max}}});
 				//cost, serverhint, isServer, freshness, capacity
               }else{
 			//		m_loadTable.insert({ interestName, {face, m_seq, m_max, 0, 0} });
 					m_cost[interestName].push_back({{face, {m_max, 0, 0, 0, m_max}}});
-              }             
+              }    
+	      }	      
               
          }
               // m_table structure: name, face, seq, server count, pending_int, hasServer - determines if router is a correction interest sender
@@ -168,14 +170,14 @@ uc::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingress,
 		}
    	 }
 
-		if(!inTable){ //if not in mtable - insert in mtable
+	/*	if(!inTable){ //if not in mtable - insert in mtable
 				NFD_LOG_INFO(" NEW entry initilaize * " << interestName << " "<< outFaceTemp.getId());
                 if(cost == 0){
                 	 m_cost[interestName].push_back({{boost::numeric_cast<int>(outFaceTemp.getId()), {0, 0, 1, 0, m_max}}});
                 }else{
              		 m_cost[interestName].push_back({{boost::numeric_cast<int>(outFaceTemp.getId()), {m_max, 0, 0, 0, m_max}}});
                 }
-        }
+        }*/
    }
    
 
