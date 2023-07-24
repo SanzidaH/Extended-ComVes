@@ -92,6 +92,9 @@ public:
   SendNack(shared_ptr<const Interest> interest);
 
   void
+  PrintExpired(std::string name);
+
+  void
   PrintResource( uint32_t task_util);
 protected:
   // inherited from Application base class.

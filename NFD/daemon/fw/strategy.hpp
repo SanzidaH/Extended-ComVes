@@ -361,6 +361,10 @@ protected: // actions
   const Fib&
   getFib() const;
 
+
+  const Pit&
+  getPit() const;
+
 protected: // accessors
   /**
    * \brief Performs a FIB lookup, considering Link object if present.

@@ -25,8 +25,22 @@
 
 #include "comves.hpp"
 #include "algorithm.hpp"
-
+#include "ns3/simulator.h"
+#include "model/ndn-l3-protocol.hpp"
 #include <ndn-cxx/util/random.hpp>
+
+
+
+#include "algorithm.hpp"
+#include "best-route-strategy.hpp"
+#include "scope-prefix.hpp"
+#include "strategy.hpp"
+#include "common/global.hpp"
+#include "common/logger.hpp"
+#include "table/cleanup.hpp"
+
+#include <ndn-cxx/lp/pit-token.hpp>
+#include <ndn-cxx/lp/tags.hpp>
 
 namespace nfd {
 namespace fw {
@@ -117,6 +131,60 @@ Comves::getStrategyName()
 }
 
 void
+Comves::removeExpiredInterest(const Interest& interest, int outFace,
+                                     const shared_ptr<pit::Entry>& pitEntry)
+{
+/*	for (const pit::InRecord& inRecord : pitEntry->getOutRecords()) {
+   	 if (inRecord.getExpiry() > now) {
+    	  if (inRecord.getFace().getId() == inFace.getId() &&
+        	  inRecord.getFace().getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) {
+       	 continue;
+	  }
+	 }
+	}*/
+//	const Pit& pit = this->getPit();
+//	 for (Pit::const_iterator i = pit.begin(); i != pit.end(); ++i){ // interate pit
+  //      	 const pit::Entry& entry = *i;
+  //  NFD_LOG_DEBUG("Can Match? " << pitEntry->canMatch(interest, 2));
+         	 for (const pit::OutRecord& outRecord : pitEntry->getOutRecords()) {
+                           NFD_LOG_DEBUG("PIT outRecord " << outRecord.getFace().getId() ); 
+       			 }
+//	 }
+
+   if(pitEntry->isSatisfied){
+	   NFD_LOG_DEBUG("already Satisfied, do not decrement " << interest);
+   }else{
+	 std::string interestName = interest.getName().get(0).toUri();
+  	 //Face& inFace = ingress.face;
+
+	 NFD_LOG_DEBUG("Not Satisfied, decrement " << interest);
+	     bool found = false;
+            for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){ // we need only face and pending interest, [0], [3]
+
+             NFD_LOG_DEBUG(interest.getName() << " Face: " <<  itr -> second[0] << " cost >> " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4] << " << mtable interest expired before");
+
+          }
+
+  for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){
+
+        if (itr -> first == interest.getName().get(0).toUri() && itr -> second[0] == outFace && itr -> second[4]== 0){
+            found = true;
+                itr -> second[3] = itr -> second[3] - 1;// updating table after expiration
+        }
+         if(found) break;
+  }
+
+              for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){ // we need only face and pending interest, [0], [3]
+
+             NFD_LOG_DEBUG("mtable interest expired after: " << interest.getName() << " face " <<  itr -> second[0] << " cost >> " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4]);
+
+          }
+    }
+}
+
+
+
+void
 Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingress,
                                      const shared_ptr<pit::Entry>& pitEntry)
 {
@@ -142,7 +210,7 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
   //insert all faces that is not in mtable for received name and initialize with zero (can we run it once?)
   
 
-
+/*
    for (const auto& nexthop : fibEntry.getNextHops()) {  //iterate all next hop in fib for received name
         Face& outFaceTemp = nexthop.getFace();
         uint64_t cost = nexthop.getCost();
@@ -154,7 +222,7 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
                 break;
               }
         }       
-       /* if(!inTable){ //if not in mtable - insert in mtable
+        if(!inTable){ //if not in mtable - insert in mtable
             NFD_LOG_INFO(" NEW entry initilaize * " << interestName << " "<< outFaceTemp.getId()); 
              if(cost == 0){
               m_loadTable.insert({ interestName, {boost::numeric_cast<int>(outFaceTemp.getId()), 0, 1, 0, 1} });
@@ -162,15 +230,15 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
               m_loadTable.insert({ interestName, {boost::numeric_cast<int>(outFaceTemp.getId()), 0, 0, 0, 0} });
             }
             
-        }  */
-   } 
+        }  
+   } */
     
     
   // Check if m_table has entry for the incoming interest and find interface with lowest cost
   for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){   
         // NFD_LOG_DEBUG("*** before "<< itr->first   << " " << itr->second[0] << " "<< itr->second[1] << " " << itr->second[2] << " " << itr->second[3]);
         if (itr -> first == interestName){
-            NFD_LOG_DEBUG(" Found incoming interest in mtable: face <<" << itr->second[0] << ", cost << " << itr->second[3] << " interest " << interest.getName());
+            NFD_LOG_DEBUG(" Found incoming interest: face <<" << itr->second[0] << ", cost << " << itr->second[3] << " interest " << interest.getName());
            // if(itr->second[4] == 1) {isServer = true; break; NFD_LOG_DEBUG("Server found, don't follow m_table ");}
             found = true;
            // int server = itr->second[2];
@@ -183,11 +251,12 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
         // NFD_LOG_DEBUG("*** after "<< itr->first   << " " << itr->second[0] << " "<< itr->second[1] << " " << itr->second[2] << " " << itr->second[3]);
    }
    
-    NFD_LOG_DEBUG(" Selected in mtable: face <<" << mtableFace << ", cost << " << mtableCost << " interest " << interest.getName());
+    NFD_LOG_DEBUG(" Selected in mtable: Face: <<" << mtableFace << ", cost << " << mtableCost << " interest " << interest.getName());
  
  
 // if(!isServer) { 
  // if entry found sent to the face with lowest cost
+
   if(found){ 
     for (const auto& nexthop : fibEntry.getNextHops()) {
              Face& outFaceTemp = nexthop.getFace();
@@ -204,7 +273,7 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
              }
         }
  } 
-  // if entry is not found, check fib and send to the best face in terms of hops
+  // if entry is not found, check fib and send to the best face in terms of hops 
   if(!found){
     for (const auto& nexthop : fibEntry.getNextHops()) {
         Face& outFace = nexthop.getFace();        
@@ -223,7 +292,7 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
 
             for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){ // we need only face and pending interest, [0], [3]
               
-             NFD_LOG_DEBUG("** mtable check before update: interestName " << interest.getName() << " face " <<  itr -> second[0] << " pending_int " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4]);
+             NFD_LOG_DEBUG(interest.getName() << " Face: " <<  itr -> second[0] << " cost >> " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4] << " <<mtable check before increment");
               
           }
 
@@ -232,7 +301,7 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
   for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){   
         if (itr -> first == interestName && itr -> second[0] == newOutface && itr -> second[4]== 0){
             //NFD_LOG_DEBUG("*** before "<< itr->first   << " face:" << itr->second[0] << ", cost: " << itr->second[3]);
-            NFD_LOG_DEBUG(" ** Found interest and face in mtable to update/increment " << interest.getName());
+         //   NFD_LOG_DEBUG(" ** Found interest and face in mtable to update/increment " << interest.getName());
             incCost = true;
             itr -> second[3] = itr -> second[3] + 1;
             //NFD_LOG_DEBUG("*** after "<< itr->first   << " face:" << itr->second[0] << ", cost: " << itr->second[3]);
@@ -248,7 +317,7 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
  */ 
             for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){ // we need only face and pending interest, [0], [3]
               
-             NFD_LOG_DEBUG("** mtable check after update: interestName " << interest.getName() << " face " <<  itr -> second[0] << " pending_int " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4]);
+             NFD_LOG_DEBUG(interest.getName() << " Face: " <<  itr -> second[0] << " cost >> " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4] << " << mtable check after increment");
               
           }
           
@@ -266,7 +335,10 @@ Comves::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingre
     }
    }
  */ 
-   
+//   Simulator::Schedule(Seconds(2.0), &Comves::removeExpiredInterest,interest, ingress, pitEntry ,this);
+  getScheduler().schedule(2_s, [=] { removeExpiredInterest(interest, newOutface, pitEntry); }); //scheduled to be expired
+	   // ns3::Simulator::Schedule(2000000000, [=] { removeExpiredInterest(interest, ingress, pitEntry); });
+           
 }
 
 
@@ -318,7 +390,7 @@ Comves::beforeSatisfyInterest(const Data& data, const FaceEndpoint& ingress,
 
             for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){ // we need only face and pending interest, [0], [3]
               
-             NFD_LOG_DEBUG("** mtable check before correction: dataName " << data.getName() << " face " <<  itr -> second[0] << " pending_int " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4]);
+             NFD_LOG_DEBUG(data.getName() << " Face: " <<  itr -> second[0] << " cost >> " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4] << "<< mtable check before decrement");
               
           }
   
@@ -330,15 +402,15 @@ Comves::beforeSatisfyInterest(const Data& data, const FaceEndpoint& ingress,
             //if(itr -> second[3] > 0)
            // itr -> second[3] = std::stoi(device_hint);// updating table with Data carried correction
            // NFD_LOG_DEBUG("*** after "<< itr->first   << " " << itr->second[0] << " "<< itr->second[1] << " " << itr->second[2] << " " << itr->second[3]);
- 		itr -> second[3] = itr -> second[3] - 1;// updating table with Data carried correction
+ 		itr -> second[3] = itr -> second[3] - 1;// decrementing cost
 
         }       
          if(found) break;
   }  
   
-              for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){ // we need only face and pending interest, [0], [3]
+          for (auto itr = m_loadTable.begin(); itr != m_loadTable.end(); itr++){ // we need only face and pending interest, [0], [3]
               
-             NFD_LOG_DEBUG("** mtable check after correction: dataName " << data.getName() << " face " <<  itr -> second[0] << " pending_int " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4]);
+             NFD_LOG_DEBUG(data.getName() << " Face: " <<  itr -> second[0] << " cost >> " << itr -> second[3] << " seq " << itr -> second[1] << " serverCount " << itr -> second[2]  << " hasServer " << itr -> second[4] << "<< mtable check after decrement");
               
           }
              

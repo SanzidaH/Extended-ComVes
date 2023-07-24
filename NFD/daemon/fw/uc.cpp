@@ -103,7 +103,7 @@ for (auto const& [key, vec_of_maps] : m_cost) {
     for (auto const& inner_map : vec_of_maps) {
         for (auto const& [inner_key, inner_vec] : inner_map) {
            
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Freshness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
 
 //		NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0]<< ", "<< inner_vec[1]<<", " <<  inner_vec[2] );
 	    /* for (auto const& elem : inner_vec) {
@@ -121,6 +121,7 @@ uc::getStrategyName()
   static const auto strategyName = Name("/localhost/nfd/strategy/uc").appendVersion(1);
   return strategyName;
 }
+
 
 void
 uc::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingress,
@@ -148,7 +149,7 @@ uc::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingress,
   bool isServer = false;
     
   //insert all faces that is not in mtable for received name and initialize with zero (can we run it once?)
-   for (const auto& nexthop : fibEntry.getNextHops()) {  //iterate all next hop in fib for received name
+/*   for (const auto& nexthop : fibEntry.getNextHops()) {  //iterate all next hop in fib for received name
         Face& outFaceTemp = nexthop.getFace();
         uint64_t cost = nexthop.getCost();
         inTable = false;
@@ -170,15 +171,15 @@ uc::afterReceiveInterest(const Interest& interest, const FaceEndpoint& ingress,
 		}
    	 }
 
-	/*	if(!inTable){ //if not in mtable - insert in mtable
+		if(!inTable){ //if not in mtable - insert in mtable
 				NFD_LOG_INFO(" NEW entry initilaize * " << interestName << " "<< outFaceTemp.getId());
                 if(cost == 0){
                 	 m_cost[interestName].push_back({{boost::numeric_cast<int>(outFaceTemp.getId()), {0, 0, 1, 0, m_max}}});
                 }else{
              		 m_cost[interestName].push_back({{boost::numeric_cast<int>(outFaceTemp.getId()), {m_max, 0, 0, 0, m_max}}});
                 }
-        }*/
-   }
+        }
+   }  */
    
 
 // Initialize counter variable
@@ -191,7 +192,7 @@ for (auto const& [key, vec_of_maps] : m_cost) {
     for (auto const& inner_map : vec_of_maps) {
         for (auto const& [inner_key, inner_vec] : inner_map) {
 
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+//            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
 
           //  NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2]);
 
@@ -233,7 +234,7 @@ for (auto const& [key, vec_of_maps] : m_cost) { //name
     for (auto const& inner_map : vec_of_maps) { 
         for (auto const& [inner_key, inner_vec] : inner_map) {//face
 
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+   //         NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
 
           //  NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2]);
             if (mtableCapacity >= inner_vec[4] &&  mtableCost == inner_vec[0] && inner_key != boost::numeric_cast<int>(inFace.getId())) {
@@ -251,15 +252,19 @@ for (auto const& [key, vec_of_maps] : m_cost) { //name
      }
   }
 }
+
+
 //got m_capacity
-int mtableFreshness = INT_MAX;
 if(lowestCapacityCount > 1){
+int mtableFreshness = INT_MAX;
+//if(lowestCapacityCount > 1){
 for (auto const& [key, vec_of_maps] : m_cost) { //name
     for (auto const& inner_map : vec_of_maps) {
         for (auto const& [inner_key, inner_vec] : inner_map) {//face
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+           // NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Freshness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
             if (mtableCost == inner_vec[0] && inner_key != boost::numeric_cast<int>(inFace.getId()) && mtableCapacity == inner_vec[4] ) {
-                     if(mtableFreshness > inner_vec[3]){
+           // if (mtableCost == inner_vec[0] && inner_key != boost::numeric_cast<int>(inFace.getId())) {        
+		    if(mtableFreshness > inner_vec[3]){
 				mtableFreshness = inner_vec[3];
 				 mtableHint = inner_vec[1];
 				  mtableFace = inner_key;
@@ -307,7 +312,7 @@ for (auto const& [key, vec_of_maps] : m_cost) { //name
     }
 }
 */
-    NFD_LOG_DEBUG(" Selected in mtable: face <<" << mtableFace << ", cost << " << mtableCost << " interest " << interest.getName());
+    NFD_LOG_DEBUG(" Selected in mtable to sent: Face: <<" << mtableFace << ", cost << " << mtableCost << " interest " << interest.getName());
  
  
 // if(!isServer) { 
@@ -344,12 +349,12 @@ for (auto const& [key, vec_of_maps] : m_cost) { //name
 //------------------------
 
   for (auto const& [key, vec_of_maps] : m_cost) {
-    NFD_LOG_DEBUG( "Before Update Name: " << newOutface);
+//    NFD_LOG_DEBUG( "Before Update in mtable: " << newOutface);
     for (auto const& inner_map : vec_of_maps) {
         for (auto const& [inner_key, inner_vec] : inner_map) {
          //  NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0]<< ", "<< inner_vec[1]<<", " <<  inner_vec[2] );
            
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Freshness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4] <<  "<< Before Update in mtable");
 
 	       	/* for (auto const& elem : inner_vec) {
                 std::cout << "Element: " << elem << std::endl;
@@ -449,8 +454,8 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
 //                        selected_index = i;
 //                    }	    
                 inner_vec[0] -= 1;
-		struct timeval tp;
-		gettimeofday(&tp, NULL);
+	//	struct timeval tp;
+	//	gettimeofday(&tp, NULL);
                // inner_vec[3] = tp.tv_sec * 1000 + tp.tv_usec / 1000;
                 inner_vec[3] = m_count;
 	//	inner_vec[3] = Simulator::Now().GetInteger();
@@ -523,11 +528,11 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
     }
 */
 for (auto const& [key, vec_of_maps] : m_cost) {
-    NFD_LOG_DEBUG( "After Update m_cost Name: " << newOutface);
+   // NFD_LOG_DEBUG( "After Update m_cost in mtable: " << newOutface);
     for (auto const& inner_map : vec_of_maps) {
         for (auto const& [inner_key, inner_vec] : inner_map) {
 
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Freshness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4] <<  "<< After Update in mtable");
 
           // NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0]<< ", "<< inner_vec[1]<<", " <<  inner_vec[2] );
         }
@@ -616,11 +621,11 @@ uc::beforeSatisfyInterest(const Data& data, const FaceEndpoint& ingress,
   //m_table format: face, seq, server count, pending int, hasServer 
 
 for (auto const& [key, vec_of_maps] : m_cost) {
-    NFD_LOG_DEBUG( "Before correction m_cost Name: " << key);
+   // NFD_LOG_DEBUG( "Before correction m_cost in mtable: " << key);
     for (auto const& inner_map : vec_of_maps) {
         for (auto const& [inner_key, inner_vec] : inner_map) {
          
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Freshness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4] << "<< Before correction m_cost in mtable" );
 
 //	      	NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0]<< ", "<< inner_vec[1]<<", " <<  inner_vec[2] );
 	    /* for (auto const& elem : inner_vec) {
@@ -637,11 +642,11 @@ for (auto const& [key, vec_of_maps] : m_cost) {
     for (const auto& innerMap : innerVector) {
         if (innerMap.count(newOutface) > 0){
 		faceExist = true;
-		 NFD_LOG_DEBUG("multiple entry for  " << innerMap.count(newOutface) << " second check" << innerMap.at(newOutface)[2] << " " << serverhint);
+		 NFD_LOG_DEBUG("Face exist  " << innerMap.count(newOutface) << " second check" << innerMap.at(newOutface)[2] << " " << serverhint);
 
 	       if(innerMap.at(newOutface)[1] == serverhint ) {
           	  exists = true;
-	  	  NFD_LOG_DEBUG("same server hint found...exist! "<< serverhint);
+	  	  NFD_LOG_DEBUG("server hint exist "<< serverhint);
            	  break;
 		}
         }
@@ -661,7 +666,7 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
     auto const& key = it->first;
     auto& vec_of_maps = it->second;
 
-    NFD_LOG_INFO(" correcting m_cost Name: " << key << ", server " << serverhint << ", face: " << newOutface << ", cost: " << cost);
+//    NFD_LOG_INFO(" correcting m_cost Name: " << key << ", server " << serverhint << ", face: " << newOutface << ", cost: " << cost);
 
     for (auto it_inner = vec_of_maps.begin(); it_inner != vec_of_maps.end(); ++it_inner) {
         auto& inner_map = *it_inner;
@@ -687,13 +692,14 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
 					
                                  }
             }
-	    else if(inner_key != newOutface && inner_vec[2] == 0 && inner_vec[1] == serverhint && inner_vec[1]!=0 && (inner_vec[0]+50>0) && inner_vec[0]!=cost ){
+//	    else if(inner_key != newOutface && inner_vec[2] == 0 && inner_vec[1] == serverhint && inner_vec[1]!=0 && inner_vec[0]!=cost ){
 		//	inner_vec[0] = inner_vec[0] - 50;
-			inner_vec[0] = cost;
+//			inner_vec[0] = cost;
 	      // inner_vec[0] =inner_vec[0] -10;
-	    }
+//	    }
+//NFD_LOG_DEBUG( "After correction m_cost in mtable: " << inner_key);
 
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4] << "<< After correction m_cost in mtable");
 
            // NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2]);
         }
@@ -747,15 +753,13 @@ int newOutface = boost::numeric_cast<int>(ingress.face.getId());
 //const uint8_t* valueData = block.value();
 //int value = std::atoi((const char *)valueData);
 //uint64_t value = ndn::Block::fromBuffer(valueData, block.value_size()).toNumber<uint64_t>();
-
-
 //	NFD_LOG_DEBUG(" ***************** hello  " << value);
 for (auto const& [key, vec_of_maps] : m_cost) {
-    NFD_LOG_DEBUG( "Before Nack m_cost Name: " << newOutface);
+//    NFD_LOG_DEBUG( "Before Nack m_cost in mtable: " << newOutface);
     for (auto const& inner_map : vec_of_maps) {
         for (auto const& [inner_key, inner_vec] : inner_map) {
 
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4] << " <<Before Nack m_cost in mtable");
 
           // NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0]<< ", "<< inner_vec[1]<<", " <<  inner_vec[2] );
         }
@@ -797,13 +801,14 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
     }
 }
 
+if(lowest_cost_count > 1){//lowest
 int highestFreshness = INT_MIN;
 
 for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
     auto const& key = it->first;
     auto& vec_of_maps = it->second;
 
-    NFD_LOG_DEBUG(" updating m_cost as per highest freshness after receiving Nack Name: " << key);
+    NFD_LOG_DEBUG(" updating m_cost as per highest freshness after receiving Nack: " << key);
 
     for (auto it_inner = vec_of_maps.begin(); it_inner != vec_of_maps.end(); ++it_inner) {
         auto& inner_map = *it_inner;
@@ -811,7 +816,7 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
         for (auto it_inner_key = inner_map.begin(); it_inner_key != inner_map.end(); ++it_inner_key) {
             auto& inner_key = it_inner_key->first;
             auto& inner_vec = it_inner_key->second;
-            if (inner_vec[0] == lowest_cost && inner_key == newOutface && inner_vec[2] == 0 && inner_vec[1]!=0 && (inner_vec[0] + 200) > 0) {
+            if (inner_vec[0] == lowest_cost && inner_key == newOutface && inner_vec[2] == 0 && inner_vec[1]!=0) {
                 // update highest_cost if inner_vec[0] is greater
                 if (inner_vec[3] > highestFreshness) {
                     highestFreshness = inner_vec[3];
@@ -821,7 +826,7 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
      }
   } 
 }
-
+}
 
         int hintTemp = 0;
         int penaltyTemp = 0;
@@ -841,7 +846,7 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
             auto& inner_vec = it_inner_key->second;
             bool fnd = false;
             if (inner_key == newOutface && inner_vec[2] == 0 && inner_vec[1] == penaltyHint) {
-                inner_vec[0] = inner_vec[0]-300;
+                inner_vec[0] = -200;
 	//	penaltyTemp = inner_vec[0];
 	//	fnd = true;
 		penaltyAdd = true;
@@ -884,11 +889,11 @@ for (auto it = m_cost.begin(); it != m_cost.end(); ++it) {
 */
 
 for (auto const& [key, vec_of_maps] : m_cost) {
-    NFD_LOG_DEBUG( "After Nack m_cost Name: " << newOutface);
+//    NFD_LOG_DEBUG( "After Nack m_cost in  mtable: " << newOutface);
     for (auto const& inner_map : vec_of_maps) {
         for (auto const& [inner_key, inner_vec] : inner_map) {
 
-            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4]);
+            NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer, Fressness, Capacity) " << inner_vec[0] << ", " << inner_vec[1] << ", " << inner_vec[2] <<", "  << inner_vec[3] << ", " << inner_vec[4] << "<<After Nack m_cost in  mtable" );
 
           // NFD_LOG_DEBUG("Face: " << inner_key << ":(cost, serverhint, isServer) " << inner_vec[0]<< ", "<< inner_vec[1]<<", " <<  inner_vec[2] );
         }

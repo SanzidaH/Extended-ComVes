@@ -372,6 +372,13 @@ Strategy::getFib() const
     return fib;
 }
 
+const Pit&
+Strategy::getPit() const
+{
+    const Pit& pit = m_forwarder.getPit();
+    return pit;
+}
+
 
 } // namespace fw
 } // namespace nfd

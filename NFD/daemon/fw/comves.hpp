@@ -71,6 +71,10 @@ public: // triggers
                    const shared_ptr<pit::Entry>& pitEntry) override;
 
   void
+  removeExpiredInterest(const Interest& interest, int outFace,
+                       const shared_ptr<pit::Entry>& pitEntry);
+
+  void
   SendCorrectionInterest();
   
   void

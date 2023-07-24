@@ -111,15 +111,18 @@ main(int argc, char* argv[])
   p2p.Install(nodes.Get(1), nodes.Get(2));
   p2p.Install(nodes.Get(1), nodes.Get(3));
 //  p2p.Install(nodes.Get(2), nodes.Get(11));
-  p2p.Install(nodes.Get(4), nodes.Get(5));
+  p2p.Install(nodes.Get(2), nodes.Get(5));
   p2p.Install(nodes.Get(2), nodes.Get(6));
   p2p.Install(nodes.Get(2), nodes.Get(7));
   p2p.Install(nodes.Get(3), nodes.Get(8));
-  p2p.Install(nodes.Get(2), nodes.Get(4));
-  p2p.Install(nodes.Get(11), nodes.Get(4));
+//  p2p.Install(nodes.Get(2), nodes.Get(4));
+//  p2p.Install(nodes.Get(11), nodes.Get(12));
+//  p2p.Install(nodes.Get(4), nodes.Get(12));
+//  p2p.Install(nodes.Get(4), nodes.Get(11));
   p2p.Install(nodes.Get(3), nodes.Get(10));
+
 //  p2p.Install(nodes.Get(3), nodes.Get(10));
-  p2p.Install(nodes.Get(2), nodes.Get(3));  
+//  p2p.Install(nodes.Get(2), nodes.Get(3));  
 
 //  p2p.Install(nodes.Get(3), nodes.Get(7));
 //  p2p.Install(nodes.Get(1), nodes.Get(11));
@@ -218,12 +221,12 @@ main(int argc, char* argv[])
   consumerHelper.SetAttribute("StartSeq", IntegerValue(8231 ));
   consumerHelper.SetAttribute("Frequency", StringValue(std::to_string( std::stoi(freq)/2))); // 10 interests a second
 //  ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(10));
-  auto apps3 = consumerHelper.Install(nodes.Get(11));
+//  auto apps3 = consumerHelper.Install(nodes.Get(11));
 
 //  apps2.Start(Seconds(5.0));
 //  apps2.Stop(Seconds(20.0));
 
-  n = "11";
+//  n = "11";
   strcallback = "/NodeList/"+n+"/ApplicationList/*/SentInterest";
   Config::ConnectWithoutContext( strcallback, MakeCallback( &SentInterestCallback ) );
   strcallback = "/NodeList/"+n+"/ApplicationList/*/ReceivedData";
@@ -279,13 +282,9 @@ main(int argc, char* argv[])
 */
  for(int i = 5; i < 9; i++){
 	 producerHelper.SetAttribute("Hint", StringValue(std::to_string(i)));
-        if(i == 8 || i ==5){
-           //  producerHelper.SetAttribute("Capacity", IntegerValue(50));
-	     producerHelper.SetAttribute("Capacity", StringValue("100"));
-	}else{
-            // producerHelper.SetAttribute("Capacity", IntegerValue(100));
-	     producerHelper.SetAttribute("Capacity", StringValue("120"));
-	}
+        if(i == 8) producerHelper.SetAttribute("Capacity", StringValue("50"));
+	if(i == 5) producerHelper.SetAttribute("Capacity", StringValue("50"));
+	if(i == 6) producerHelper.SetAttribute("Capacity", StringValue("120"));
 	if(i == 7) producerHelper.SetAttribute("Capacity", StringValue("150"));
 
 	 ndnGlobalRoutingHelper.AddOrigins("/prefix",nodes.Get(i));
@@ -326,7 +325,7 @@ main(int argc, char* argv[])
   tracefile3 << "nodeid,event,service,time"<< std::endl;
 
 
-  Simulator::Stop(Seconds(50));
+  Simulator::Stop(Seconds(80));
 //  ns3::ndn::L3RateTracer::InstallAll("rate-trace.txt", Seconds(1.0));
   Simulator::Run();
   Simulator::Destroy();
