@@ -120,6 +120,11 @@ Producer::GetTypeId(void)
             UintegerValue(100), MakeUintegerAccessor(&Producer::m_capacity),
             MakeUintegerChecker<uint32_t>())
       .AddAttribute(
+            "Seed",
+            "Seed for run",
+            UintegerValue(100), MakeUintegerAccessor(&Producer::m_seed),
+            MakeUintegerChecker<uint32_t>())
+      .AddAttribute(
             "Hint",
             "Server Hint",
             UintegerValue(0), MakeUintegerAccessor(&Producer::m_hint),
@@ -130,6 +135,7 @@ Producer::GetTypeId(void)
 }
 
 Producer::Producer()
+	: m_rand(CreateObject<UniformRandomVariable>())
 {
   NS_LOG_FUNCTION_NOARGS();
   
@@ -142,10 +148,10 @@ Producer::StartApplication()
   NS_LOG_FUNCTION_NOARGS();
   App::StartApplication();
   serviceCount = 0;
-
+  srand( m_seed*1000 );
   FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
 //  m_utilization = 20;
-  m_utilization = rand()%5+20;
+  m_utilization = rand()%10+20;
   Simulator::Schedule(Seconds(0.02), &Producer::PrintResource,this, 0);
 }
 
@@ -210,7 +216,9 @@ Producer::OnInterest(shared_ptr<const Interest> interest)
   if(serverLeft < 1){
 	  //  computeTime = 5;
     NS_LOG_INFO("OVERLOADED");
+    double ctime = 2.00;
     m_serverUpdate(GetNode()->GetId(), interest->getName().toUri(), serverLeft , "OVERLOADED");
+    m_serverUpdate(GetNode()->GetId(), std::to_string(ctime), serverLeft, "Computation time");
     Simulator::Schedule(Seconds(2), &Producer::PrintExpired,this, interest->getName().toUri());
     SendNack(interest);
   }else{ 
@@ -228,6 +236,10 @@ Producer::OnInterest(shared_ptr<const Interest> interest)
    // computeTime = (m_utilization/m_capacity);
     
     double computeTime = static_cast<double>(m_utilization) / m_capacity;
+    float diff = 0.0009-0.0001;
+     NS_LOG_INFO("diff:"<<diff);
+     computeTime = computeTime + (((float) rand() / RAND_MAX) * diff) + 0.0001;
+     m_serverUpdate(GetNode()->GetId(), std::to_string(computeTime), serverLeft, "Computation time");
 //    if ((computeTime*100) < 30){
 //	    computeTime = 0.2;
 //    }

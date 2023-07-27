@@ -42,6 +42,8 @@
 #include "ns3/double.h"
 #include "ns3/random-variable-stream.h"
 
+#include "ns3/ndnSIM/model/ndn-common.hpp"
+#include "ns3/ndnSIM/utils/ndn-rtt-estimator.hpp"
 #include "ndn-app.hpp"
 #include "ns3/nstime.h"
 #include "ns3/ptr.h"
@@ -96,6 +98,7 @@ public:
 
   void
   PrintResource( uint32_t task_util);
+
 protected:
   // inherited from Application base class.
   virtual void
@@ -105,10 +108,10 @@ protected:
   StopApplication(); // Called at time specified by Stop
 
   uint32_t m_capacity; // model server task capacity (in terms of budget of milliseconds
-
+  uint32_t m_seed;
   uint32_t m_utilization; // model server task capacity (in terms of budget of milliseconds
   uint32_t m_util; 
-  //Ptr<UniformRandomVariable> m_rand; ///< @brief nonce generator
+  Ptr<UniformRandomVariable> m_rand; ///< @brief nonce generator
   //Ptr<NormalRandomVariable> m_comTime;
   
 //private:
@@ -130,7 +133,7 @@ TracedCallback < uint32_t, std::string, int,  std::string > m_serverUpdate;
 
         std::string str = strLine;
         std::vector<std::string> result;
-        uint32_t i =0;
+        uint32_t i = 0;
         std::string buildStr = "";
 
         for ( i = 0; i<str.size(); i++) {

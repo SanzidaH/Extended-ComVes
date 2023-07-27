@@ -17,6 +17,7 @@ def main(filepath=None, traceID=None, maxSuccess=None):
     nodes = {}
     global first
     first = 3
+    m=80
     # first = [];
    # barWidth = 0.25
    # fig = plt.subplots(figsize =(12, 8))
@@ -60,19 +61,20 @@ def main(filepath=None, traceID=None, maxSuccess=None):
                # print(row["status"])
                # print(row["nodeid"])
                 time.append(float(row['time']))
+                time1 = float(row['time'])
                 thresholds = np.arange(1, int(max(time)) + 1)
                 turn = 2
                 if(str(array[3]) == "0"):
                     turn = 0
-                    if str(row["status"]) == "OVERLOADED":
+                    if str(row["status"]) == "OVERLOADED" and int(time1) <=(m-10) and int(time1) > 5:
                         dictall0[int(row["nodeid"])].append(float(row["time"]))
-                    elif str(row["status"]) == "Data Processing":
+                    elif str(row["status"]) == "Data Processing" and int(time1) <=(m-10) and int(time1) > 5:
                         dictall0[int(row["nodeid"])].append(float(row["time"]))
                 if(str(array[3]) == "1"):
                     turn = 1
-                    if str(row["status"]) == "OVERLOADED":
+                    if str(row["status"]) == "OVERLOADED" and int(time1) <=(m-10) and int(time1) > 5:
                         dictall1[int(row["nodeid"])].append(float(row["time"]))
-                    elif str(row["status"]) == "Data Processing":
+                    elif str(row["status"]) == "Data Processing" and int(time1) <=(m-10) and int(time1) > 5:
                         dictall1[int(row["nodeid"])].append(float(row["time"]))
             if(int(turn)==0):
                 dictall0Keys = list(dictall0.keys())

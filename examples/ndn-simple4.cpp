@@ -112,10 +112,11 @@ main(int argc, char* argv[])
   p2p.Install(nodes.Get(1), nodes.Get(3));
 //  p2p.Install(nodes.Get(2), nodes.Get(11));
 //  p2p.Install(nodes.Get(2), nodes.Get(5));
-//  p2p.Install(nodes.Get(2), nodes.Get(6));
-  p2p.Install(nodes.Get(3), nodes.Get(7));
-  p2p.Install(nodes.Get(2), nodes.Get(8));
-  p2p.Install(nodes.Get(2), nodes.Get(10));
+  p2p.Install(nodes.Get(2), nodes.Get(6));
+  p2p.Install(nodes.Get(2), nodes.Get(7));
+//  p2p.Install(nodes.Get(2), nodes.Get(9));
+  p2p.Install(nodes.Get(3), nodes.Get(8));
+//  p2p.Install(nodes.Get(2), nodes.Get(10));
 //  p2p.Install(nodes.Get(3), nodes.Get(10));
 //  p2p.Install(nodes.Get(2), nodes.Get(3));  
 
@@ -197,21 +198,10 @@ main(int argc, char* argv[])
   consumerHelper.SetAttribute("StartSeq", IntegerValue(5231 )); 
   consumerHelper.SetAttribute("Frequency", StringValue(std::to_string( std::stoi(freq)*3))); // 10 interests a second
 //  ndnGlobalRoutingHelper.AddOrigins("/update",nodes.Get(10));
-  auto apps2 = consumerHelper.Install(nodes.Get(10));
+//  auto apps2 = consumerHelper.Install(nodes.Get(10));
 
 //  apps2.Start(Seconds(5.0));
 //  apps2.Stop(Seconds(20.0));
-
-  n = "10"; 
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/SentInterest";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( &SentInterestCallback ) );
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/ReceivedData";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( & ReceivedDataCallback ) );
-
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/Data";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( & DataCallback ) );
-  strcallback = "/NodeList/"+n+"/ApplicationList/*/Nack";
-  Config::ConnectWithoutContext( strcallback, MakeCallback( & NackCallback ) );
 
   // first node
 //   apps2.Stop(Seconds(100.0)); // stop the consumer app at 10 seconds mark
@@ -255,12 +245,13 @@ main(int argc, char* argv[])
   producerHelper.Install(nodes.Get(8)); // last node 
   producerHelper.Install(nodes.Get(9)); // last node
 */
- for(int i = 7; i < 9; i++){
+ for(int i = 6; i < 9; i++){
 	 producerHelper.SetAttribute("Hint", StringValue(std::to_string(i)));
-       	if(i == 5){ producerHelper.SetAttribute("Capacity", StringValue("100"));}
- 	if(i == 6){ producerHelper.SetAttribute("Capacity", StringValue("80"));}
-	if(i == 7){producerHelper.SetAttribute("Capacity", StringValue("200"));}
-	if(i == 8){producerHelper.SetAttribute("Capacity", StringValue("200"));}
+      // 	if(i == 5){ producerHelper.SetAttribute("Capacity", StringValue("50"));}
+ 	if(i == 6){ producerHelper.SetAttribute("Capacity", StringValue("120"));}
+	if(i == 7){producerHelper.SetAttribute("Capacity", StringValue("120"));}
+//	if(i == 9){producerHelper.SetAttribute("Capacity", StringValue("60"));}
+	if(i == 8){producerHelper.SetAttribute("Capacity", StringValue("45"));}
 	 ndnGlobalRoutingHelper.AddOrigins("/prefix",nodes.Get(i));
 //	 ndnGlobalRoutingHelper.AddOrigins("/prefix/10",nodes.Get(i));
 	   producerHelper.Install(nodes.Get(i)); // last node

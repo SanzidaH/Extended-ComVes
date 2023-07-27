@@ -2,24 +2,12 @@
 # python3 raw-a.py comves-0 "0"
 # ./waf --run="ndn-simple --Run=0 --freq=70 --dur=5 --util=20 --cor=0"
 
-run="719"
+run="376"
 #freq="40 60 80 100 120 140 180 200"
 #freq="200"
 #freq="75 80 85 90 95 100" 
 #freq="30 35 40 45 50"
-#freq="30 32 34 36"
-#freq="40 45 50 55 60"
-#freq="30 35 40 45"
-#freq="40 45 50 55" #one consumer, 100capacity
-#freq="10 20 30 40" 
-#freq="30 34 38 40"
-#freq="15 16 17 18" # 2 consumer, 50/100 capacity
-freq="20 30 40 50"
-#freq="25 30 35 40"# two freq confirm
-#freq="10 11 12 13"
-#freq="27 30 33 36"
-#freq="12 14 16 18"
-#freq="30 40 50 60 70"
+freq="20 30 40"
 util="5"
 dur="30"
 #cor="0 1"
@@ -38,7 +26,7 @@ for val in $freq
 do	
 	for c in $cor
 	do	
-                NS_GLOBAL_VALUE="RngRun=$run" ./waf --run="ndn-simple4 --Run=$run --freq=$val --dur=$dur --util=$util --cor=$c" &
+                NS_GLOBAL_VALUE="RngRun=$run" ./waf --run="ndn-simple --Run=$run --freq=$val --dur=$dur --util=$util --cor=$c" &
                 wait
                 echo "Start instance $i for id $Test"
        	done	
@@ -47,27 +35,26 @@ wait
 echo "Finished for $Test at $(date)!"
 #echo "All Simulations Complete"
 echo "All Simulations Complete for New Run"
-wait
+
 python3 raw-a.py comves-$run $run
 echo "python3 raw-a.py comves-$run $run"
 #python3 raw_b.py server-$run $run
 
-
-#for val in $freq
-#do
-#	for c in $cor;
-#	do
+for val in $freq
+do
+	for c in $cor;
+	do
                # python3 raw_b.py "server-$run-$c-$val-" $run
 	       #	echo "python3 raw_b.py "server-$run-$c-$val-" $run"
-              # python3 raw_b.py "server-$run-$val-" $run
-       #        python3 raw_b2.py "server-$run-$val-$c" $run
-	#       echo "python3 raw_b2.py "server-$run-$val-$c-"  $run"
-	#       wait
-#	done
-#done
+#               python3 raw_b.py "server-$run-$val-" $run
+               python3 raw_b2.py "server-$run-$val-$c" $run
+	       echo "python3 raw_b2.py "server-$run-$val-$c-"  $run"
+	       wait
+	done
+done
 wait
 echo "script run for average result"
-wait
+
 for val in $freq
 do
       # for c in $cor;
@@ -75,7 +62,6 @@ do
                # python3 raw_b.py "server-$run-$c-$val-" $run
                #        echo "python3 raw_b.py "server-$run-$c-$val-" $run"
                python3 raw_b3.py "server-$run-$val-" $run
-	       python3 raw_b6.py "server-$run-$val-"
        #        python3 raw_b2.py "server-$run-$val-$c" $run
                echo "python3 raw_b.py "server-$run-$val-"  $run"
 
@@ -88,8 +74,6 @@ echo "script run for average result"
 
 python3 plot1.py $run-Average_Delay-.txt
 python3 plot1.py $run-Success_Ratio-.txt
-python3 plot1.py $run-Success_Ratio_Consumer0.txt
-python3 cdf_plot.py UnsortedLatencies-$run
 echo "Plotting done"
 
 #mv -f ndn-proactive-* /newhome/sanzida/scripts/
